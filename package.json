@@ -1,8 +1,9 @@
 {
   "name": "reun",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "client-side nodejs-like require using unpkg",
   "main": "main.js",
+  "scripts": { "test": "true" },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/solsort/reun.git"
