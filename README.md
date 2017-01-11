@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.org/solsort/reun.svg?branch=master)](https://travis-ci.org/solsort/reun)
 [![npm](https://img.shields.io/npm/v/npm.svg)](https://www.npmjs.com/package/reun)
 
-# REUN - require(unpkg) &nbsp; ![REUN](https://reun.solsort.com/icon.png =64x64)
+# <img src=https://reun.solsort.com/icon.png width=64 height=64> REUN - require(unpkg) 
 
 Reun is:
 
