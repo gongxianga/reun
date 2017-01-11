@@ -1,6 +1,8 @@
-[![Website](https://img.shields.io/website-up-down-green-red/https/reun.solsort.com.svg)](https://reun.solsort.com/)
-[![Build Status](https://travis-ci.org/solsort/reun.svg?branch=master)](https://travis-ci.org/solsort/reun)
+[![website](https://img.shields.io/badge/website-reun.solsort.com-blue.svg)](https://reun.solsort.com/)
+[![github](https://img.shields.io/badge/github-solsort/reun-blue.svg)](https://github.com/solsort/reun)
+[![travis](https://img.shields.io/travis/solsort/reun.svg)](https://travis-ci.org/solsort/reun)
 [![npm](https://img.shields.io/npm/v/reun.svg)](https://www.npmjs.com/package/reun)
+
 
 # <img src=https://reun.solsort.com/icon.png width=64 height=64> REUN - require(unpkg) 
 
