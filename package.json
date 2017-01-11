@@ -1,0 +1,17 @@
+{
+  "name": "reun",
+  "version": "0.0.1",
+  "description": "client-side nodejs-like require using unpkg",
+  "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/solsort/reun.git"
+  },
+  "keywords": [ "browser", "require" ],
+  "author": "RasmusErik / solsort.com",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/solsort/reun/issues"
+  },
+  "homepage": "http://reun.solsort.com"
+}

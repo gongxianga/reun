@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+body {
+  font-family: sans-serif;
+  text-align: center;
+}
+#readme {
+  display: inline-block;
+  text-align: left;
+  max-width: 60ex;
+}
+#source {
+  text-align: left;
+  display: inline-block;
+}
+    </style>
+  </head>
+  <body>
+    <div style=text-align:left><em>README.md</em></div>
+    <div id=readme></div>
+    <hr/>
+    <div style=text-align:left><em>main.js</em>:</div>
+    <pre id=source></pre>
+    <script src=main.js></script>
+    <script>
+reun.run(`
+    var showdown = new (require('showdown@1.6.0')).Converter();
+    function load(f,cb) {
+      var xhr = new XMLHttpRequest();
+      xhr.onloadend = function() { cb(xhr.responseText); };
+      xhr.open('GET', f); xhr.send();
+    }
+    load('./README.md', function(txt) {
+      readme.innerHTML = showdown.makeHtml(txt);
+    });
+    load('./main.js', function(txt) {
+      source.innerHTML = 
+        txt.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    });
+    `,location.href);
+    </script>
+  </body>
+</html>
