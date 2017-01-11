@@ -99,6 +99,7 @@
         throw e;
       }, 0);
     });
+    return runQueue;
   }
 
   var reun = {
