@@ -31,6 +31,10 @@
     if(module === 'reun') {
       return 'reun';
     }
+    if(module.startsWith('https:') ||
+        module.startsWith('http:')) {
+      return module;
+    }
     path = (module.startsWith('.')
         ? path.replace(/[/][^/]*$/, '/')  
         : 'https://unpkg.com/');
