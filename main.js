@@ -109,7 +109,8 @@
         return Promise.resolve(require(name));
       }
       return run('module.exports = require(\'' + name + '\');', 
-          self.location && self.location.href || './');
+          self.location && self.location.href || './'
+          ).then(m => m.exports);
     }
   };
 
