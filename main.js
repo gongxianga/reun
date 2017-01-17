@@ -31,6 +31,7 @@
     if(module === 'reun') {
       return 'reun';
     }
+    path = path.replace(/[?#].*/, '');
     path = (module.startsWith('.')
         ? path.replace(/[/][^/]*$/, '/')  
         : 'https://unpkg.com/');
