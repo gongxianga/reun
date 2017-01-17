@@ -31,6 +31,10 @@
     if(module === 'reun') {
       return 'reun';
     }
+    if(module.startsWith('https:') ||
+        module.startsWith('http:')) {
+      return module;
+    }
     path = path.replace(/[?#].*/, '');
     path = (module.startsWith('.')
         ? path.replace(/[/][^/]*$/, '/')  
@@ -96,6 +100,7 @@
         throw e;
       }, 0);
     });
+    return runQueue;
   }
 
   var reun = {
@@ -105,7 +110,8 @@
         return Promise.resolve(require(name));
       }
       return run('module.exports = require(\'' + name + '\');', 
-          self.location && self.location.href || './');
+          self.location && self.location.href || './'
+          ).then(m => m.exports);
     }
   };
 

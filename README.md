@@ -57,3 +57,9 @@ Also we just resolve the module name as `'https://unpkg.com/' + module_name`. To
 - It does obviously not work with every module.
 
 In spite of these limitations, it is still possible to `require` many nodejs module directly to the web.
+## License
+
+This software is copyrighted solsort.com ApS, and available under GPLv3, as well as proprietary license upon request.
+
+Versions older than 10 years also fall into the public domain.
+
