@@ -2,7 +2,7 @@
   "name": "reun",
   "version": "0.0.8",
   "description": "client-side nodejs-like require using unpkg",
-  "main": "main.js",
+  "main": "reun.js",
   "scripts": { "test": "true" },
   "repository": {
     "type": "git",
