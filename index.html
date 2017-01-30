@@ -15,7 +15,7 @@ body {
   </head>
   <body>
     <div id=readme></div>
-    <script src=https://unpkg.com/reun></script>
+    <script src=./reun.js></script>
     <script>
 reun.run(`
  var showdown = new (require('showdown@1.6.0')).Converter();
@@ -25,6 +25,8 @@ reun.run(`
  };
  xhr.open('GET', './README.md'); xhr.send();
     `,location.href);
+
+reun.run(`require('./error-not-exists.js');`);
     </script>
     <script>document.write('<script src="//incoming.solsort.com/log.js?' + location.protocol + '//' + location.host + location.pathname + location.search + '"></s' + 'cript>');</script>
   </body>

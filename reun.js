@@ -73,7 +73,7 @@
       xhr.open('GET', url);
       xhr.onreadystatechange = function() {
         if(xhr.readyState === 4) {
-          if(typeof xhr.responseText === 'string') {
+          if(xhr.status === 200 && typeof xhr.responseText === 'string') {
             resolve(xhr.responseText);
           } else {
             reject(xhr);
@@ -107,7 +107,6 @@
         module.startsWith('http:')) {
       return module;
     }
-    path = typeof path === 'string' ? path : '';
     path = path.replace(/[?#].*/, '');
     path = (module.startsWith('.')
         ? path.replace(/[/][^/]*$/, '/')  
@@ -126,6 +125,7 @@
 
   var modules = {reun:{run:run,run:run}};
   function _run(src, path) {
+    path = typeof path === 'string' ? path : '';
     var require = function require(module) {
       var url = moduleUrl(path, module);
       if(!modules[url]) {
@@ -147,15 +147,16 @@
         throw e;
       }
       return urlGet(e.url)
-        .then(function(moduleSrc) {
+        .catch(function() {
+          throw new Error('require could not load "' + e.url + '" ' +
+              'Possibly module incompatible with http://reun.solsort.com/');
+        }).then(function(moduleSrc) {
           return _run(moduleSrc, e.url);
-        })
-      .then(function(module) {
-        modules[e.url] = module.exports;
-      })
-      .then(function() {
-        return _run(src, path);
-      });
+        }).then(function(module) {
+          modules[e.url] = module.exports;
+        }).then(function() {
+          return _run(src, path);
+        });
     }
     return Promise.resolve(module);
   }
