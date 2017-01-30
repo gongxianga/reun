@@ -1,10 +1,12 @@
+<img src=https://reun.solsort.com/icon.png width=96 height=96 align=right> 
+
 [![website](https://img.shields.io/badge/website-reun.solsort.com-blue.svg)](https://reun.solsort.com/)
 [![github](https://img.shields.io/badge/github-solsort/reun-blue.svg)](https://github.com/solsort/reun)
 [![travis](https://img.shields.io/travis/solsort/reun.svg)](https://travis-ci.org/solsort/reun)
 [![npm](https://img.shields.io/npm/v/reun.svg)](https://www.npmjs.com/package/reun)
 
 
-# <img src=https://reun.solsort.com/icon.png width=64 height=64> REUN - require(unpkg) 
+# REUN - require(unpkg) 
 
 Reun is:
 
@@ -57,9 +59,143 @@ Also we just resolve the module name as `'https://unpkg.com/' + module_name`. To
 - It does obviously not work with every module.
 
 In spite of these limitations, it is still possible to `require` many nodejs module directly to the web.
-## License
+
+# Source Code
+    
+    (function() { "use strict";
+    
+    
+Http(s) get utility function, as `fetch` is not generally available yet.
+
+      function urlGet(url) {
+        return new Promise(function(resolve, reject) {
+          var xhr = new XMLHttpRequest();
+          xhr.open('GET', url);
+          xhr.onreadystatechange = function() {
+            if(xhr.readyState === 4) {
+              if(typeof xhr.responseText === 'string') {
+                resolve(xhr.responseText);
+              } else {
+                reject(xhr);
+              }
+            }
+          }
+          xhr.send();
+        });
+      }
+    
+    
+When trying to load at module, that is not loaded yet, we throw this error:
+
+      function RequireError(module, url) { 
+        this.module = module; 
+        this.url = url;
+      }
+      RequireError.prototype.toString = function() {
+        return 'RequireError:' + this.module +
+          ' url:' + this.url;
+      }
+    
+Convert a require-address to a url.
+path is baseurl used for mapping relative file paths (`./hello.js`) to url.
+
+      function moduleUrl(path, module) {
+        if(module === 'reun') {
+          return 'reun';
+        }
+        if(module.startsWith('https:') ||
+            module.startsWith('http:')) {
+          return module;
+        }
+        path = typeof path === 'string' ? path : '';
+        path = path.replace(/[?#].*/, '');
+        path = (module.startsWith('.')
+            ? path.replace(/[/][^/]*$/, '/')  
+            : 'https://unpkg.com/');
+        path = path + module;
+        while(path.indexOf('/./') !== -1) {
+          path = path.replace('/./', '/');
+        }
+        var prevPath;
+        do {
+          prevPath = path;
+          path = path.replace(/[/][^/]*[/][.][.][/]/g, '/');
+        } while(path !== prevPath);
+        return path;
+      }
+    
+      var modules = {reun:{run:run,run:run}};
+      function _run(src, path) {
+        var require = function require(module) {
+          var url = moduleUrl(path, module);
+          if(!modules[url]) {
+            throw new RequireError(module, url);
+          } 
+          return modules[url];
+        };
+        var wrappedSrc = '(function(module,exports,require){' +
+          src + '})//# sourceURL=' + path;
+        var module = {
+          require: require,
+          id: path.replace('https://unpkg.com/', ''),
+          uri: path,
+          exports: {}};
+        try {
+          eval(wrappedSrc)(module, module.exports, require);
+        } catch (e) {
+          if(e.constructor !== RequireError) {
+            throw e;
+          }
+          return urlGet(e.url)
+            .then(function(moduleSrc) {
+              return _run(moduleSrc, e.url);
+            })
+          .then(function(module) {
+            modules[e.url] = module.exports;
+          })
+          .then(function() {
+            return _run(src, path);
+          });
+        }
+        return Promise.resolve(module);
+      }
+    
+      var runQueue = Promise.resolve();
+      function run(src, path) {
+        runQueue = runQueue.then(function() {
+          return _run(src, path);
+          console.log('then', e);
+        }).catch(function(e) {
+          setTimeout(function() {
+            throw e;
+          }, 0);
+        });
+        return runQueue;
+      }
+    
+      var reun = {
+        run: run,
+        require: function require(name) {
+          if(self.module && self.module.require) {
+            return Promise.resolve(require(name));
+          }
+          return run('module.exports = require(\'' + name + '\');', 
+              self.location && self.location.href || './'
+              ).then(m => m.exports);
+        }
+      };
+    
+      if(typeof module === 'object') {
+        module.exports = reun;
+      } else {
+        self.reun = reun;
+      }
+    })();
+    
+# License
 
 This software is copyrighted solsort.com ApS, and available under GPLv3, as well as proprietary license upon request.
 
 Versions older than 10 years also fall into the public domain.
 
+    
