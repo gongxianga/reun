@@ -100,7 +100,7 @@ Convert a require-address to a url.
 path is baseurl used for mapping relative file paths (`./hello.js`) to url.
 
       function moduleUrl(path, module) {
-        if(module === 'reun') {
+        if(module.slice(0,4) === 'reun') {
           return 'reun';
         }
         if(module.startsWith('https:') ||

@@ -128,6 +128,9 @@
     var result, wrappedSrc, module;
     path = typeof path === 'string' ? path : '';
     var require = function require(module) {
+      if(modules[module]) {
+        return modules[module];
+      }
       var url = moduleUrl(path, module);
       if(!modules[url]) {
         throw new RequireError(module, url);
@@ -163,6 +166,20 @@
           return _run(moduleSrc, e.url);
         }).then(function(exports) {
           modules[e.url] = exports;
+
+          // Find the short name of the module, and remember it by that alias,
+          // to make sure that later requires for the module without version/url
+          // returns the already loaded module.
+          //
+          if(e.url.startsWith('https://unpkg.com/') ||
+              exports.meta && exports.meta.id) {
+            var name = e.url
+              .replace('https://unpkg.com/', '')
+              .replace(/[@/].*/, '');
+          if(!modules[name]) {
+            modules[name] = exports;
+          }
+        }
         }).then(function() {
           return _run(code, path);
         });
