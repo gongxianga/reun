@@ -63,11 +63,13 @@ In spite of these limitations, it is still possible to `require` many nodejs mod
 # Source Code
     
     (function() { "use strict";
-    
+      var reun = {};
+      reun.log = function() {};
     
 Http(s) get utility function, as `fetch` is not generally available yet.
 
       function urlGet(url) {
+        reun.log('urlGet', url);
         return new Promise(function(resolve, reject) {
           var xhr = new XMLHttpRequest();
           xhr.open('GET', url);
@@ -123,8 +125,9 @@ path is baseurl used for mapping relative file paths (`./hello.js`) to url.
         return path;
       }
     
-      var modules = {reun:{run:run,run:run}};
+      var modules = {reun:reun};
       function _run(code, path) {
+        reun.log('_run', path);
         var result, wrappedSrc, module;
         path = typeof path === 'string' ? path : '';
         var require = function require(module) {
@@ -188,6 +191,7 @@ returns the already loaded module.
       }
     
       var runQueue = Promise.resolve();
+    
       function run(code, path) {
         runQueue = runQueue.then(function() {
           return _run(code, path);
@@ -198,17 +202,15 @@ returns the already loaded module.
         });
         return runQueue;
       }
+      reun.run = run;
     
-      var reun = {
-        run: run,
-        require: function require(name) {
-          if(self.module && self.module.require) {
-            return Promise.resolve(require(name));
-          }
-          return run('module.exports = require(\'' + name + '\');', 
-              self.location && self.location.href || './');
+      reun.require = function require(name) {
+        if(self.module && self.module.require) {
+          return Promise.resolve(require(name));
         }
-      };
+        return run('module.exports = require(\'' + name + '\');', 
+            self.location && self.location.href || './');
+      }
     
       if(typeof module === 'object') {
         module.exports = reun;
