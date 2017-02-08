@@ -68,7 +68,7 @@
 
   // Http(s) get utility function, as `fetch` is not generally available yet.
   //
-  function urlGet(url) {
+  reun.urlGet = function urlGet(url) {
     reun.log('urlGet', url);
     return new Promise(function(resolve, reject) {
       var xhr = new XMLHttpRequest();
@@ -84,7 +84,7 @@
       }
       xhr.send();
     });
-  }
+  };
 
 
   // When trying to load at module, that is not loaded yet, we throw this error:
@@ -161,7 +161,7 @@
       if(e.constructor !== RequireError) {
         throw e;
       }
-      return urlGet(e.url)
+      return reun.urlGet(e.url)
         .catch(function() {
           throw new Error('require could not load "' + e.url + '" ' +
               'Possibly module incompatible with http://reun.solsort.com/');
