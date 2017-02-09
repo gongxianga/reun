@@ -19,7 +19,7 @@ Reun is:
 
 ## API
 
-- `reun.run(code, [base_url])` execute `code`, where `code` is either a function, or the string source of a module. `require()` is available and is pretending to be synchronous, and done relative to the `base_url`. Returns a promise of the function result or module-exports.
+- `reun.run(code, [opt])` execute `code`, where `code` is either a function, or the string source of a module. `require()` is available and is pretending to be synchronous, and done relative to the `opt.uri`. Returns a promise of the function result or module-exports.
 - `reun.require(module)` loads a module, path is relative to the `location.href` if available. Returns a promise.
 
 ## Usage example
@@ -126,15 +126,16 @@ path is baseurl used for mapping relative file paths (`./hello.js`) to url.
       }
     
       var modules = {reun:reun};
-      function _run(code, path) {
-        reun.log('_run', path);
+      function _run(code, opt) {
+        var opt = opt || {};
+        reun.log('_run', opt.uri);
         var result, wrappedSrc, module;
-        path = typeof path === 'string' ? path : '';
-        var require = function require(module) {
+        var uri = typeof opt.uri === 'string' ? opt.uri : '';
+        var require = function require(module, opt) {
           if(modules[module]) {
             return modules[module];
           }
-          var url = moduleUrl(path, module);
+          var url = moduleUrl(uri, module);
           if(!modules[url]) {
             throw new RequireError(module, url);
           } 
@@ -142,11 +143,11 @@ path is baseurl used for mapping relative file paths (`./hello.js`) to url.
         };
         if(typeof code === 'string') {
           wrappedSrc = '(function(module,exports,require){' +
-            code + '})//# sourceURL=' + path;
+            code + '})//# sourceURL=' + uri;
           module = {
             require: require,
-            id: path.replace('https://unpkg.com/', ''),
-            uri: path,
+            id: uri.replace('https://unpkg.com/', ''),
+            uri: uri,
             exports: {}};
           code = function() {
             eval(wrappedSrc)(module, module.exports, require);
@@ -166,7 +167,7 @@ path is baseurl used for mapping relative file paths (`./hello.js`) to url.
               throw new Error('require could not load "' + e.url + '" ' +
                   'Possibly module incompatible with http://reun.solsort.com/');
             }).then(function(moduleSrc) {
-              return _run(moduleSrc, e.url);
+              return _run(moduleSrc, {uri: e.url});
             }).then(function(exports) {
               modules[e.url] = exports;
     
@@ -184,7 +185,7 @@ returns the already loaded module.
               }
             }
             }).then(function() {
-              return _run(code, path);
+              return _run(code, opt);
             });
         }
         return Promise.resolve(result);
@@ -192,9 +193,9 @@ returns the already loaded module.
     
       var runQueue = Promise.resolve();
     
-      function run(code, path) {
+      function run(code, opt) {
         runQueue = runQueue.then(function() {
-          return _run(code, path);
+          return _run(code, opt);
         }).catch(function(e) {
           setTimeout(function() {
             throw e;
@@ -209,7 +210,7 @@ returns the already loaded module.
           return Promise.resolve(require(name));
         }
         return run('module.exports = require(\'' + name + '\');', 
-            self.location && self.location.href || './');
+            {uri: self.location && self.location.href || './'});
       }
     
       if(typeof module === 'object') {

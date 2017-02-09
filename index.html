@@ -24,7 +24,7 @@ reun.run(`
    readme.innerHTML = showdown.makeHtml(xhr.responseText);
  };
  xhr.open('GET', './README.md'); xhr.send();
-    `,location.href);
+ `,{uri:location.href});
 
 reun.run(`require('./error-not-exists.js');`);
 reun.run(function() {
