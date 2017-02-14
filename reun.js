@@ -5,7 +5,9 @@
 // [![travis](https://img.shields.io/travis/solsort/reun.svg)](https://travis-ci.org/solsort/reun)
 // [![npm](https://img.shields.io/npm/v/reun.svg)](https://www.npmjs.com/package/reun)
 // 
-// # !!! Currently under major refactoring / development !!!
+// TODO: unit testing
+// TODO: documentaiton, - merge into source
+//
 // # REUN - require(unpkg) 
 // 
 // Reun is:
@@ -19,8 +21,8 @@
 // 
 // ## API
 // 
-// - `reun.run(code, [opt])` execute `code`, where `code` is either a function, or the string source of a module. `require()` is available and is pretending to be synchronous, and done relative to the `opt.uri`. Returns a promise of the function result or module-exports.
-// - `reun.require(module)` loads a module, path is relative to the `location.href` if available. Returns a promise.
+// - `reun.eval(code, [opt])` execute `code`, where `code` is either a function, or the string source of a module. `require()` is available and is pretending to be synchronous, and done relative to the `opt.uri`. Returns a promise of the function result or module-exports.
+// - `reun.require(module, [opt])` loads a module, path is relative to the `location.href` if available. Returns a promise.
 // 
 // ## Usage example
 // 
@@ -62,9 +64,6 @@
 //
 // # REUN - require(unpkg)
 //
-// TODO: unit testing
-// TODO: documentaiton, - merge into source
-//
 // ## Project setup
 
 (function() { "use strict";
@@ -76,7 +75,32 @@
     direape: da
   };
 
-  // ## moduleUrl
+  // ## `reun.eval(src|fn, opt);`
+  //
+  // Functions will be called as a module with `require`, `exports`, and `module` as parameters, - similar to <http://requirejs.org/docs/commonjs.html>
+
+  var runQueue = new Promise((resolve) => da.ready(() => resolve()));
+
+  reun.eval = (fn, opt) => {
+    runQueue = runQueue.then(function() {
+      return do_eval(fn, opt);
+    }).catch((e)  => da.nextTick(() => { throw e; }));
+    return runQueue;
+  };
+
+  da.handle('reun:eval', reun.eval);
+
+  // ## `reun.require(module-name, opt);`
+
+  reun.require = (name, opt) => 
+    do_eval('module.exports = require(\'' + name + '\');', 
+        Object.assign({uri: da.global.location && da.global.location.href || './'}, opt));
+
+  da.handle('reun:require', reun.require);
+
+  // ## Implementation details
+  //
+  // ### moduleUrl
   //
   // Convert a require-address to a url.
   // path is baseurl used for mapping relative file paths (`./hello.js`) to url.
@@ -108,27 +132,6 @@
     return path;
   }
 
-  // ## `reun.eval(src|fn, opt);`
-  //
-  // Functions will be called as a module with `require`, `exports`, and `module` as parameters, - similar to <http://requirejs.org/docs/commonjs.html>
-
-  var runQueue = new Promise((resolve) => da.ready(() => resolve()));
-
-  reun.eval = (fn, opt) => {
-    runQueue = runQueue.then(function() {
-      return do_eval(fn, opt);
-    }).catch((e)  => da.nextTick(() => { throw e; }));
-    return runQueue;
-  };
-
-  // ## `reun.require(module-name, opt);`
-
-  reun.require = (name, opt) => 
-    do_eval('module.exports = require(\'' + name + '\');', 
-        Object.assign({uri: da.global.location && da.global.location.href || './'}, opt));
-
-  // ## Implementation details
-  //
   // ### do_eval
 
   function do_eval(fn, opt) {
