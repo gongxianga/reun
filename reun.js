@@ -5,7 +5,7 @@
 // [![travis](https://img.shields.io/travis/solsort/reun.svg)](https://travis-ci.org/solsort/reun)
 // [![npm](https://img.shields.io/npm/v/reun.svg)](https://www.npmjs.com/package/reun)
 // 
-// 
+// # !!! Currently under major refactoring / development !!!
 // # REUN - require(unpkg) 
 // 
 // Reun is:
@@ -61,6 +61,12 @@
 // In spite of these limitations, it is still possible to `require` many nodejs module directly to the web.
 //
 // # Source Code
+
+// TODO: Version 0.2 api: 
+//
+// - reun.eval(src|fn, opt);
+// - reun.require(src|fn, opt);
+// - reun:eval
 
 (function() { "use strict";
   var reun = {};
