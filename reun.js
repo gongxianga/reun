@@ -92,7 +92,8 @@
   // ## `reun.require(module-name, opt);`
 
   reun.require = (name, opt) => 
-    reun.eval('module.exports = require(\'' + name + '\');', 
+    reun.eval('module.exports = require("' + name + '",' +
+          JSON.stringify(opt || {}) + ');',
         Object.assign({uri: da.global.location && da.global.location.href || './'}, opt));
 
   da.handle('reun:require', reun.require);
@@ -174,8 +175,8 @@
         .catch(() => {
           throw new Error('require could not load "' + e.url + '" ' +
               'Possibly module incompatible with http://reun.solsort.com/'); })
-        .then((moduleSrc) => executeModule(stringToFunction(moduleSrc, {uri: e.url}), 
-              {uri: e.url}))
+        .then((moduleSrc) => executeModule(stringToFunction(moduleSrc, e.opt), 
+              e.opt))
         .then((exports) => assignModule(e.url, exports))
         .then(() => rerunModule(fn, module));
     }
@@ -213,7 +214,7 @@
     }
     var url = moduleUrl(name, parentModule);
     if(!modules[url]) {
-      throw new RequireError(name, url);
+      throw new RequireError(name, url, opt);
     } 
     return modules[url];
   }
@@ -230,9 +231,12 @@
   //
   // When trying to load at module, that is not loaded yet, we throw this error:
 
-  function RequireError(module, url) { 
+  function RequireError(module, url, opt) { 
     this.module = module; 
     this.url = url;
+    opt = opt || {};
+    opt.uri = url;
+    this.opt = opt;
   }
   RequireError.prototype.toString = function() {
     return 'RequireError:' + this.module +
