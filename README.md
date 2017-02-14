@@ -82,9 +82,8 @@ Functions will be called as a module with `require`, `exports`, and `module` as 
       var runQueue = new Promise((resolve) => da.ready(() => resolve()));
     
       reun.eval = (fn, opt) => {
-        runQueue = runQueue.then(function() {
-          return do_eval(fn, opt);
-        }).catch((e)  => da.nextTick(() => { throw e; }));
+        runQueue = runQueue.then(() => do_eval(fn, opt))
+          .catch((e)  => da.nextTick(() => { throw e; }));
         return runQueue;
       };
     
@@ -93,7 +92,7 @@ Functions will be called as a module with `require`, `exports`, and `module` as 
 ## `reun.require(module-name, opt);`
     
       reun.require = (name, opt) => 
-        do_eval('module.exports = require(\'' + name + '\');', 
+        reun.eval('module.exports = require(\'' + name + '\');', 
             Object.assign({uri: da.global.location && da.global.location.href || './'}, opt));
     
       da.handle('reun:require', reun.require);
