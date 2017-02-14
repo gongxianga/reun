@@ -60,98 +60,34 @@
 // 
 // In spite of these limitations, it is still possible to `require` many nodejs module directly to the web.
 //
-// # Version 0.2
+// # REUN - require(unpkg)
+//
+// TODO: unit testing
+// TODO: documentaiton, - merge into source
+//
 // ## Project setup
+
 (function() { "use strict";
   var da = typeof direape !== 'undefined' ? direape : require('direape');
   da.testSuite('reun');
-
   var reun = da.global.reun || {};
-
-  da.test('hello', () => true);
-  var modules = new Map();
-
-  // ## TODO `reun.eval(src|fn, opt);`
-  //
-  // Functions will be called as a module with `require`, `exports`, and `module` as parameters, - similar to <http://requirejs.org/docs/commonjs.html>
-
-  reun.eval = (fn, opt) => {
-    opt = opt || {};
-    if(typeof fn === 'string') {
-      fn = stringToModuleFunction(fn, opt);
-    }
-    runModule(fn, opt);
+  var modules = {
+    reun: reun,
+    direape: da
   };
 
-  // ## TODO `reun.require(module-name, opt);`
+  // ## moduleUrl
   //
-  // ## Implementation details
-
-  function stringToModuleFunction(src, opt) {
-      var wrappedSrc = '(function(require,exports,module){' +
-        src + '})//# sourceURL=' + opt.uri;
-      return eval(wrappedSrc);
-  }
-
-  // ## Main / test runner
-  //
-  da.ready(() => {
-    if((da.isNodeJs() && require.main === module && process.argv[2] === 'test') ||
-        (da.global.location && da.global.location.hostname === 'localhost')) {
-      da.runTests('reun')
-        .then(() => da.isNodeJs() && process.exit(0))
-        .catch(() => da.isNodeJs() && process.exit(1));
-    }
-  });
-  if(typeof module === 'object') {
-    module.exports = reun;
-  } else {
-    self.reun = reun;
-  }
-
-// # Old
-
-  reun.log = function() {};
-
-  // Http(s) get utility function, as `fetch` is not generally available yet.
-  //
-  reun.urlGet = function urlGet(url) {
-    reun.log('urlGet', url);
-    return new Promise(function(resolve, reject) {
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', url);
-      xhr.onreadystatechange = function() {
-        if(xhr.readyState === 4) {
-          if(xhr.status === 200 && typeof xhr.responseText === 'string') {
-            resolve(xhr.responseText);
-          } else {
-            reject(xhr);
-          }
-        }
-      }
-      xhr.send();
-    });
-  };
-
-
-  // When trying to load at module, that is not loaded yet, we throw this error:
-  //
-  function RequireError(module, url) { 
-    this.module = module; 
-    this.url = url;
-  }
-  RequireError.prototype.toString = function() {
-    return 'RequireError:' + this.module +
-      ' url:' + this.url;
-  }
-
   // Convert a require-address to a url.
   // path is baseurl used for mapping relative file paths (`./hello.js`) to url.
-  //
-  function moduleUrl(path, module) {
+
+  function moduleUrl(module, opt) {
+    var path = opt.uri || '';
+
     if(module.slice(0,4) === 'reun') {
       return 'reun';
     }
+
     if(module.startsWith('https:') ||
         module.startsWith('http:')) {
       return module;
@@ -172,99 +108,152 @@
     return path;
   }
 
-  var modules = {reun:reun};
-  function _run(code, opt) {
-    var opt = opt || {};
-    reun.log('_run', opt.uri);
-    var result, wrappedSrc, module;
-    var uri = typeof opt.uri === 'string' ? opt.uri : '';
-    var require = function require(module, opt) {
-      if(modules[module]) {
-        return modules[module];
-      }
-      var url = moduleUrl(uri, module);
-      if(!modules[url]) {
-        throw new RequireError(module, url);
-      } 
-      return modules[url];
-    };
-    if(typeof code === 'string') {
-      wrappedSrc = '(function(module,exports,require){' +
-        code + '})//# sourceURL=' + uri;
-      module = {
-        require: require,
-        id: uri.replace('https://unpkg.com/', ''),
-        uri: uri,
-        exports: {}};
-      code = function() {
-        eval(wrappedSrc)(module, module.exports, require);
-        return module.exports;
-      };
-    } else if(typeof self.require === 'undefined') {
-      self.require = require;
+  // ## `reun.eval(src|fn, opt);`
+  //
+  // Functions will be called as a module with `require`, `exports`, and `module` as parameters, - similar to <http://requirejs.org/docs/commonjs.html>
+
+  var runQueue = new Promise((resolve) => da.ready(() => resolve()));
+
+  reun.eval = (fn, opt) => {
+    runQueue = runQueue.then(function() {
+      return do_eval(fn, opt);
+    }).catch((e)  => da.nextTick(() => { throw e; }));
+    return runQueue;
+  };
+
+  // ## `reun.require(module-name, opt);`
+
+  reun.require = (name, opt) => 
+    do_eval('module.exports = require(\'' + name + '\');', 
+        Object.assign({uri: da.global.location && da.global.location.href || './'}, opt));
+
+  // ## Implementation details
+  //
+  // ### do_eval
+
+  function do_eval(fn, opt) {
+    opt = opt || {};
+    if(typeof fn === 'string') {
+      fn = stringToFunction(fn, opt);
     }
+    return executeModule(fn, opt);
+  };
+
+  // ### executeModule
+
+  function executeModule(fn, opt) {
+    opt.uri = opt.uri || '';
+    var require = (name, opt) => reun_require(name, opt, module);
+    var module = {
+      require: require,
+      uri: opt.uri,
+      id: opt.uri.replace('https://unpkg.com/', '').replace(/@[^/]*/, ''),
+      exports: {}
+    };
+    if(opt.main) {
+      require.main = module;
+    }
+
+    return rerunModule(fn, module);
+  }
+
+  // ### rerunModule
+  //
+  function rerunModule(fn, module) {
+    var result;
     try {
-      result = code();
+      fn(module.require, module.exports, module);
+      result = module.exports;
     } catch (e) {
       if(e.constructor !== RequireError) {
         throw e;
       }
-      return reun.urlGet(e.url)
-        .catch(function() {
+      return da.call(da.nid, 'da:GET', e.url)
+        .catch(() => {
           throw new Error('require could not load "' + e.url + '" ' +
-              'Possibly module incompatible with http://reun.solsort.com/');
-        }).then(function(moduleSrc) {
-          return _run(moduleSrc, {uri: e.url});
-        }).then(function(exports) {
-          modules[e.url] = exports;
-
-          // Find the short name of the module, and remember it by that alias,
-          // to make sure that later requires for the module without version/url
-          // returns the already loaded module.
-          //
-          if(e.url.startsWith('https://unpkg.com/') ||
-              exports.meta && exports.meta.id) {
-            var name = e.url
-              .replace('https://unpkg.com/', '')
-              .replace(/[@/].*/, '');
-          if(!modules[name]) {
-            modules[name] = exports;
-          }
-        }
-        }).then(function() {
-          return _run(code, opt);
-        });
+              'Possibly module incompatible with http://reun.solsort.com/'); })
+        .then((moduleSrc) => executeModule(stringToFunction(moduleSrc, {uri: e.url}), 
+              {uri: e.url}))
+        .then((exports) => assignModule(e.url, exports))
+        .then(() => rerunModule(fn, module));
     }
     return Promise.resolve(result);
   }
 
-  var runQueue = Promise.resolve();
+  // ### `shortName(uri)`
 
-  function run(code, opt) {
-    runQueue = runQueue.then(function() {
-      return _run(code, opt);
-    }).catch(function(e) {
-      setTimeout(function() {
-        throw e;
-      }, 0);
-    });
-    return runQueue;
-  }
-  reun.run = run;
+  function assignModule(uri, exports) {
 
-  reun.require = function require(name) {
-    if(self.module && self.module.require) {
-      return Promise.resolve(require(name));
+    modules[uri] = exports;
+    //
+    // Find the short name of the module, and remember it by that alias,
+    // to make sure that later requires for the module without version/url
+    // returns the already loaded module.
+    //
+
+    if(exports.meta && exports.meta.id) {
+      modules[exports.meta.id] = exports;
     }
-    return run('module.exports = require(\'' + name + '\');', 
-        {uri: self.location && self.location.href || './'});
+
+    var name = uri
+      .replace('https://unpkg.com/', '')
+      .replace(/[@/].*/, '');
+    if(!modules[name]) {
+      modules[name] = exports;
+    }
   }
 
+  // ### reun_require
+
+  function reun_require(name, opt, parentModule) {
+    if(modules[name]) {
+      return modules[name];
+    }
+    var url = moduleUrl(name, parentModule);
+    if(!modules[url]) {
+      throw new RequireError(name, url);
+    } 
+    return modules[url];
+  }
+
+  // ### stringToFunction
+
+  function stringToFunction(src, opt) {
+    var wrappedSrc = '(function(require,exports,module){' +
+      src + '})//# sourceURL=' + opt.uri;
+    return eval(wrappedSrc);
+  }
+
+  // ### RequireError
+  //
+  // When trying to load at module, that is not loaded yet, we throw this error:
+
+  function RequireError(module, url) { 
+    this.module = module; 
+    this.url = url;
+  }
+  RequireError.prototype.toString = function() {
+    return 'RequireError:' + this.module +
+      ' url:' + this.url;
+  }
+
+  // ## Main / test runner
+
+  da.ready(() => {
+    if((da.isNodeJs() && require.main === module && process.argv[2] === 'test') ||
+        (da.global.location && da.global.location.hostname === 'localhost')) {
+      da.runTests('reun')
+        .then(() => da.isNodeJs() && process.exit(0))
+        .catch(() => da.isNodeJs() && process.exit(1));
+    }
+  });
   if(typeof module === 'object') {
     module.exports = reun;
   } else {
     self.reun = reun;
   }
+
+  // ## end
 })();
 
 // # License
