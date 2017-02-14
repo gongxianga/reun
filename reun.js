@@ -60,16 +60,57 @@
 // 
 // In spite of these limitations, it is still possible to `require` many nodejs module directly to the web.
 //
-// # Source Code
-
-// TODO: Version 0.2 api: 
-//
-// - reun.eval(src|fn, opt);
-// - reun.require(src|fn, opt);
-// - reun:eval
-
+// # Version 0.2
+// ## Project setup
 (function() { "use strict";
-  var reun = {};
+  var da = typeof direape !== 'undefined' ? direape : require('direape');
+  da.testSuite('reun');
+
+  var reun = da.global.reun || {};
+
+  da.test('hello', () => true);
+  var modules = new Map();
+
+  // ## TODO `reun.eval(src|fn, opt);`
+  //
+  // Functions will be called as a module with `require`, `exports`, and `module` as parameters, - similar to <http://requirejs.org/docs/commonjs.html>
+
+  reun.eval = (fn, opt) => {
+    opt = opt || {};
+    if(typeof fn === 'string') {
+      fn = stringToModuleFunction(fn, opt);
+    }
+    runModule(fn, opt);
+  };
+
+  // ## TODO `reun.require(module-name, opt);`
+  //
+  // ## Implementation details
+
+  function stringToModuleFunction(src, opt) {
+      var wrappedSrc = '(function(require,exports,module){' +
+        src + '})//# sourceURL=' + opt.uri;
+      return eval(wrappedSrc);
+  }
+
+  // ## Main / test runner
+  //
+  da.ready(() => {
+    if((da.isNodeJs() && require.main === module && process.argv[2] === 'test') ||
+        (da.global.location && da.global.location.hostname === 'localhost')) {
+      da.runTests('reun')
+        .then(() => da.isNodeJs() && process.exit(0))
+        .catch(() => da.isNodeJs() && process.exit(1));
+    }
+  });
+  if(typeof module === 'object') {
+    module.exports = reun;
+  } else {
+    self.reun = reun;
+  }
+
+// # Old
+
   reun.log = function() {};
 
   // Http(s) get utility function, as `fetch` is not generally available yet.

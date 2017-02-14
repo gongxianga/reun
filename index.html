@@ -15,6 +15,7 @@ body {
   </head>
   <body>
     <div id=readme></div>
+    <script src=https://unpkg.com/direape@0.2></script>
     <script src=./reun.js></script>
     <script>
 reun.run(`
@@ -26,10 +27,12 @@ reun.run(`
  xhr.open('GET', './README.md'); xhr.send();
  `,{uri:location.href});
 
+/*
 reun.run(`require('./error-not-exists.js');`);
 reun.run(function() {
   console.log(Object.keys(require('lodash')));
 });
+*/
     </script>
     <script>document.write('<script src="//incoming.solsort.com/log.js?' + location.protocol + '//' + location.host + location.pathname + location.search + '"></s' + 'cript>');</script>
   </body>
