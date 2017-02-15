@@ -1,6 +1,6 @@
 {
   "name": "reun",
-  "version": "0.2.2",
+  "version": "0.2.4",
   "description": "client-side nodejs-like require using unpkg",
   "main": "reun.js",
   "scripts": {
@@ -24,5 +24,8 @@
     "eslint": "^3.15.0",
     "live-server": "^1.2.0",
     "uglify-js-harmony": "^2.6.2"
+  },
+  "dependencies": {
+    "direape": "^0.2.5"
   }
 }

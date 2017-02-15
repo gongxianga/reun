@@ -81,9 +81,8 @@ Functions will be called as a module with `require`, `exports`, and `module` as 
       var runQueue = new Promise((resolve) => da.ready(() => resolve()));
     
       reun.eval = (fn, opt) => {
-        runQueue = runQueue.then(function() {
-          return do_eval(fn, opt);
-        }).catch((e)  => da.nextTick(() => { throw e; }));
+        runQueue = runQueue.then(() => do_eval(fn, opt))
+          .catch((e)  => da.nextTick(() => { throw e; }));
         return runQueue;
       };
     
@@ -92,7 +91,8 @@ Functions will be called as a module with `require`, `exports`, and `module` as 
 ## `reun.require(module-name, opt);`
     
       reun.require = (name, opt) => 
-        do_eval('module.exports = require(\'' + name + '\');', 
+        reun.eval('module.exports = require("' + name + '",' +
+              JSON.stringify(opt || {}) + ');',
             Object.assign({uri: da.global.location && da.global.location.href || './'}, opt));
     
       da.handle('reun:require', reun.require);
@@ -174,8 +174,8 @@ path is baseurl used for mapping relative file paths (`./hello.js`) to url.
             .catch(() => {
               throw new Error('require could not load "' + e.url + '" ' +
                   'Possibly module incompatible with http://reun.solsort.com/'); })
-            .then((moduleSrc) => executeModule(stringToFunction(moduleSrc, {uri: e.url}), 
-                  {uri: e.url}))
+            .then((moduleSrc) => executeModule(stringToFunction(moduleSrc, e.opt), 
+                  e.opt))
             .then((exports) => assignModule(e.url, exports))
             .then(() => rerunModule(fn, module));
         }
@@ -213,7 +213,7 @@ returns the already loaded module.
         }
         var url = moduleUrl(name, parentModule);
         if(!modules[url]) {
-          throw new RequireError(name, url);
+          throw new RequireError(name, url, opt);
         } 
         return modules[url];
       }
@@ -230,9 +230,12 @@ returns the already loaded module.
 
 When trying to load at module, that is not loaded yet, we throw this error:
     
-      function RequireError(module, url) { 
+      function RequireError(module, url, opt) { 
         this.module = module; 
         this.url = url;
+        opt = opt || {};
+        opt.uri = url;
+        this.opt = opt;
       }
       RequireError.prototype.toString = function() {
         return 'RequireError:' + this.module +
