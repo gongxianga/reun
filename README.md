@@ -66,7 +66,7 @@ In spite of these limitations, it is still possible to `require` many nodejs mod
 
 ## Project setup
     
-    (function() { "use strict";
+    (function() { 'use strict';
       var da = typeof direape !== 'undefined' ? direape : require('direape');
       da.testSuite('reun');
       var reun = da.global.reun || {};
@@ -140,7 +140,7 @@ path is baseurl used for mapping relative file paths (`./hello.js`) to url.
           fn = stringToFunction(fn, opt);
         }
         return executeModule(fn, opt);
-      };
+      }
     
 ### executeModule
     
@@ -238,7 +238,7 @@ When trying to load at module, that is not loaded yet, we throw this error:
       RequireError.prototype.toString = function() {
         return 'RequireError:' + this.module +
           ' url:' + this.url;
-      }
+      };
     
 ## Main / test runner
     

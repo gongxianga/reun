@@ -66,7 +66,7 @@
 //
 // ## Project setup
 
-(function() { "use strict";
+(function() { 'use strict';
   var da = typeof direape !== 'undefined' ? direape : require('direape');
   da.testSuite('reun');
   var reun = da.global.reun || {};
@@ -140,7 +140,7 @@
       fn = stringToFunction(fn, opt);
     }
     return executeModule(fn, opt);
-  };
+  }
 
   // ### executeModule
 
@@ -238,7 +238,7 @@
   RequireError.prototype.toString = function() {
     return 'RequireError:' + this.module +
       ' url:' + this.url;
-  }
+  };
 
   // ## Main / test runner
 
