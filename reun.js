@@ -62,7 +62,6 @@
 // 
 // In spite of these limitations, it is still possible to `require` many nodejs module directly to the web.
 //
-// # REUN - require(unpkg)
 //
 // ## Project setup
 
@@ -244,7 +243,7 @@
 
   da.ready(() => {
     if((da.isNodeJs() && require.main === module && process.argv[2] === 'test') ||
-        (da.global.location && da.global.location.hostname === 'localhost')) {
+        (da.global.REUN_RUN_TESTS)) {
       da.runTests('reun')
         .then(() => da.isNodeJs() && process.exit(0))
         .catch(() => da.isNodeJs() && process.exit(1));
