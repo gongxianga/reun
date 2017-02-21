@@ -1,6 +1,6 @@
 {
   "name": "reun",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "client-side nodejs-like require using unpkg",
   "main": "reun.js",
   "scripts": {
