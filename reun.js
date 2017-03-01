@@ -86,7 +86,8 @@
     return runQueue;
   };
 
-  da.handle('reun:eval', reun.eval);
+  da.handle('reun:eval', (fn, opt) => 
+      reun.eval(fn, opt).then(da.jsonify));
 
   // ## `reun.require(module-name, opt);`
 

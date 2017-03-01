@@ -68,7 +68,7 @@ In spite of these limitations, it is still possible to `require` many nodejs mod
     (function() { 'use strict';
       var da = typeof direape !== 'undefined' ? direape : require('direape');
       da.testSuite('reun');
-      var reun = da.global.reun || {};
+      var reun = self.reun || {};
       var modules = {
         reun: reun,
         direape: da
@@ -86,14 +86,15 @@ Functions will be called as a module with `require`, `exports`, and `module` as 
         return runQueue;
       };
     
-      da.handle('reun:eval', reun.eval);
+      da.handle('reun:eval', (fn, opt) => 
+          reun.eval(fn, opt).then(da.jsonify));
     
 ## `reun.require(module-name, opt);`
     
       reun.require = (name, opt) => 
         reun.eval('module.exports = require("' + name + '",' +
               JSON.stringify(opt || {}) + ');',
-            Object.assign({uri: da.global.location && da.global.location.href || './'}, opt));
+            Object.assign({uri: self.location && self.location.href || './'}, opt));
     
       da.handle('reun:require', reun.require);
     
@@ -246,7 +247,7 @@ When trying to load at module, that is not loaded yet, we throw this error:
     
       da.ready(() => {
         if((da.isNodeJs() && require.main === module && process.argv[2] === 'test') ||
-            (da.global.REUN_RUN_TESTS)) {
+            (self.REUN_RUN_TESTS)) {
           da.runTests('reun')
             .then(() => da.isNodeJs() && process.exit(0))
             .catch(() => da.isNodeJs() && process.exit(1));
