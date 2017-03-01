@@ -65,13 +65,18 @@
 //
 // ## Project setup
 
-(function() { 'use strict';
+(function() { 
+  'use strict';
   var da = typeof direape !== 'undefined' ? direape : require('direape');
   da.testSuite('reun');
   var reun = self.reun || {};
   var modules = {
     reun: reun,
     direape: da
+  };
+  
+  reun.info = {
+    github: 'solsort/reun'
   };
 
   // ## `reun.eval(src|fn, opt);`
